@@ -1,0 +1,20 @@
+# 1 "c-main.c"
+# 1 "<built-in>"
+# 1 "<command-line>"
+# 1 "c-main.c"
+# 1 "print.hpp" 1
+
+
+
+
+
+
+void printSumInt(int a, int b);
+void printSumFloat(float a, float b);
+# 2 "c-main.c" 2
+
+int main(int argc, char* argv[]) {
+    printSumInt(1, 2);
+    printSumFloat(1.5f, 2.5f);
+    return 0;
+}
