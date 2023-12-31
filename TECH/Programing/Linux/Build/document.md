@@ -48,7 +48,7 @@
 
  trung gian: C compiler
 
- **B3**: biên dịch mã nguồn sang Assembly. Trong GCC bạn gõ lệnh là 
+ **B3**: biên dịch source code sang Assembly. Trong GCC bạn gõ lệnh là 
  sẽ ra được file .s là file chứa mã lệnh assembly
  gcc -S hello.i -o hello.s
 
@@ -265,9 +265,22 @@ $ nm print.o
 0000000000000000 T _Z8printSumii
                  U _ZSt4cout
 ```
-Các hàm đó được xuất (trong hệ thống của tôi) dưới dạng _Z8printSumff cho phiên bản float và _Z8printSumii cho phiên bản int. Mọi tên hàm trong C++ đều bị đọc sai trừ khi được khai báo là "C" bên ngoài.
+**Vì sao lại có _Z8printSumff, _Z8printSumii , _ZSt4cout ?**
 
- Có hai hàm được khai báo bằng liên kết C trong print.cpp: printSumInt và printSumFloat.
+C++ có hỗ trợ overload, tức là có thể có 2 functions chung 1 name.
+2 function này cùng tên, khác params thôi.
+Như vậy những ngôn ngữ như C++ nó phải tìm ra cách để phân biệt 2 hàm cùng name nhưng khác
+params.
+
+Để phân biệt được như vậy thì khi biên dịch ra, C++ sẽ đổi tên hàm lại._Z8printSumff --> chính là symbol
+
+Và  preprocessed file  (đuôi .ii) gom hết header vào 1 file. " Nhưng vì 1 header có thể bao gồm các header khác, nên cùng 1 header có thể gọi lại nhiều lần. Và vì nội dung header chỉ được chèn vào vị trí bao gồm nó, nên dễ dàng kết thúc với các tuyên bố trùng lặp. "  
+
+Các chương trình biên dịch nó khong có khả năng liên kết các file
+nên khi biên dịch, nó sẽ gom tất cả các file lại làm một file .ii
+Bước preprocessor sẽ copy tất cả các file trong include, bỏ toàn bộ vào trong 1 file. 
+
+Có hai hàm được khai báo bằng liên kết C trong print.cpp: printSumInt và printSumFloat.
 
 Bây giờ chúng ta hãy xem print.hpp, một Header file có thể được bao gồm cả từ các Source file C hoặc C++, điều này sẽ cho phép printSumInt và printSumFloat được gọi từ cả C và từ C++, và printSum được gọi từ C++:
 
@@ -286,7 +299,6 @@ void printSumFloat(float a, float b);
 #endif
 ```
 Nếu chúng tôi đưa nó từ Source file C:
-
 
 ```
 void printSumInt(int a, int b);
@@ -330,11 +342,24 @@ So sánh 2 file c-main.ii và hello-world.ii ta thấy được số lệnh th�
 
 
 
-Header guard (hay còn gọi là inlcude guard) là một phương pháp cực kì đơn giản để tránh việc include header file 2 lần trong một file source.
+Header guard (hay còn gọi là inlcude guard) là một phương pháp cực kì đơn giản để tránh việc include header file nhiều lần trong một file source.
 
-Trường hợp bạn lỡ khai báo 2 lần header trong 1 soucre file , trực tiếp hoặc gián tiếp.
+Trường hợp bạn lỡ khai báo nhiều lần header trong 1 soucre file , trực tiếp hoặc gián tiếp.
 
 Nhưng vì 1 header có thể bao gồm các header khác, nên cùng 1 header có thể gọi lại nhiều lần. Và vì nội dung header chỉ được chèn vào vị trí bao gồm nó, nên dễ dàng kết thúc với các tuyên bố trùng lặp.
+
+Cách giải quyết là ở  1 file luôn có dòng này:
+ví dụ: 
+
+#ifndef HOANG_PHAM_H
+#define HOANG_PHAM_H
+#endif
+
+hoặc
+
+#ifndef QUANG_LE
+#define QUANG_LE
+#endif
 
 Tạo 2 file
 File unguarded.hpp  
@@ -437,11 +462,12 @@ unguarded.hpp:1:7: error: previous definition of 'class A'
 
 `Pass-by-value` được hiểu là khi bạn thay đổi biến trong hàm thì ngoài hàm sẽ không bị ảnh hưởng. Nó giống như bạn copy giá trị của biến vào biến khác rồi truyền vào hàm.
 
+
 Vì tôi sử dụng lệnh `using namespace std`, nên tôi không cần phải xác định tên của các ký hiệu (hàm hoặc lớp) bên trong không gian tên std trong phần còn lại của đơn vị dịch thuật, trong trường hợp của tôi là phần còn lại của tệp nguồn.
 
  Nếu đây là một Header file, không nên chèn lệnh này vì Header file được cho là được đưa vào từ nhiều Source file.
  
- Lưu ý cách một số tham số là const. Điều này có nghĩa là chúng ta không thể thay đổi chúng trong phần nội dung của hàm nếu chúng ta cố gắng làm vậy. Nó sẽ báo lỗi biên dịch. Ngoài ra, hãy lưu ý rằng tất cả các tham số trong tệp nguồn này được truyền theo giá trị, không phải theo tham chiếu (&) hoặc theo con trỏ (*).
+ Lưu ý cách một số tham số là const. Điều này có nghĩa là chúng ta không thể thay đổi chúng trong phần nội dung của hàm nếu chúng ta cố gắng làm vậy. Nó sẽ báo lỗi biên dịch. **Ngoài ra, hãy lưu ý rằng tất cả các tham số trong tệp nguồn này được truyền theo giá trị, không phải theo tham chiếu (&) hoặc theo con trỏ (*).**
 
  Vì việc khai báo hàm như những gì người gọi thấy không quan trọng, nên chúng ta có thể tạo tiêu đề by-value.hpp như thế này:
 ```
@@ -453,6 +479,13 @@ int sum(std::vector<int> v);
 int sum(std::vector<float> v);
 ```
 Việc thêm các từ hạn định const ở đây được cho phép (thậm chí bạn có thể đủ điều kiện là các biến const không có trong định nghĩa và nó sẽ hoạt động), nhưng điều này là không cần thiết và nó sẽ chỉ khiến các khai báo dài dòng.
+
+
+#### Constness of Parameters
+    const type name = value;
+
+
+Sử dụng từ khóa const với biến, coder sẽ không cần quan tâm tới việc thay đổi giá trị của biến nên sẽ rất dễ dàng trong việc sử dụng giá trị mà không cần quan tâm tại một vị trí nào đó, sẽ có người thay đổi giá trị của biến.
 
 ### Pass by Reference
 
@@ -556,3 +589,414 @@ float sum(const std::vector<float> * const v) {
     return accumulate(v->begin(), v->end(), 0.0f);
 }
 ```
+Để khai báo một con trỏ tới phần tử const (int trong ví dụ), bạn có thể khai báo kiểu như sau:
+
+```
+int const *
+const int *
+```
+Nếu bạn cũng muốn bản thân con trỏ là const, nghĩa là con trỏ không thể thay đổi để trỏ đến một thứ khác, bạn thêm một const sau dấu sao:
+```
+int const * const
+const int * const
+```
+Nếu bạn muốn con trỏ là const, nhưng không phải là phần tử được nó trỏ:
+
+```
+int * const
+
+```
+So sánh các function signatures với việc kiểm tra đã được giải mã của Object file:
+```
+$ g++ -c by-pointer.cpp
+$ nm -C by-pointer.o
+000000000000004a T sum(float*, float*)
+0000000000000000 T sum(int const*, int const*)
+0000000000000105 T sum(std::vector<float, std::allocator<float> > const*)
+000000000000009c T sum(std::vector<int, std::allocator<int> > const*)
+```
+
+Cú pháp nm sử dụng ký hiệu đầu tiên (const sau loại). Ngoài ra, hãy lưu ý rằng hằng số duy nhất được xuất và quan trọng đối với người gọi là liệu hàm có sửa đổi phần tử được trỏ bởi con trỏ hay không. Hằng số của chính con trỏ không liên quan đến người gọi vì bản thân con trỏ luôn được truyền dưới dạng bản sao. Hàm chỉ có thể tạo bản sao con trỏ của riêng nó để trỏ đến một nơi khác, điều này không liên quan đến người gọi.
+
+
+[B. MAKE/CMAKE](#make)
+
+[1. Understand make process](#make1)
+
+[C. BUID OPTIMIZATION](#opt)
+
+[1. -O2, -O3](#opt1)
+
+[2. Strip symbols"](#opt2)
+
+### B. CMake / Make 
+
+<a id="make"> </a>
+
+Tạo phần mềm không chỉ là viết mã; bạn cần xây dựng tất cả source code để tạo ra phần mềm có thể sử dụng được. Quá trình xây dựng này có thể được thực hiện thủ công nhưng có thể trở nên khó khăn khi bạn bắt đầu làm việc với các dự án lớn. 
+
+Đây là nơi các công cụ như CMake và Make có thể giúp tự động hóa quy trình. Cả hai công cụ này đều cho phép chuyển từ source code sang tệp thực thi.
+
+**Biên dịch (Compilation) là gì?**
+
+Biên dịch là quá trình dich từ mã nguồn ( code ) sang mã máy ( nhị phân). Quá trình này bao gồm một số bước : preprocessing , compiling, linking để tạo ra một thư viện hoặc một tệp thực thi có thể được chạy trực tiếp bởi máy tính.
+
+![alt](https://earthly.dev/blog/assets/images/cmake-vs-make-diff/IbLS3QY.png)
+
+*Quá trình biên dịch này còn được gọi là quá trình xây dựng và là nơi CMake và Make tham gia vào.*
+
+**CMAKE và MAKE hoạt động như thế nào ?**
+
+CMake và Make giúp tự động hóa và tiết kiệm thời gian bằng cách đưa tất cả các lệnh cần thiết để xây dựng chương trình vào tệp Makefile hoặc CMakeLists.txt mà ta không cần gõ lại từng dòng code.
+
+Make là 1 tool giúp control việc tạo các tệp thực thi và các  non–source files khác của chương trình từ các tệp nguồn của chương trình. Nó lấy hướng dẫn về cách xây dựng chương trình từ một tệp có tên là Makefile.
+
+Còn đối với CMAKE thì nó yêu cầu 1 file CMakeList.txt đa nền tảng (cross-platform Make). 
+-> Nó hoạt động được trên nhiều hệ điều hành khác nhau.
+
+CMAKE cho phép xây dựng :  compiler-independent builds, testing, packaging, và các trình tải xuống của phần mềm. 
+
+**Lưu ý: CMake tạo file xây dựng cho các hệ thống khác. Nó không phải là một hệ thống xây dựng.**
+
+CMake tạo ra Makefile và sau đó Makefile được tạo có thể được sử dụng với Make trong nền tảng đang được xử lý:
+
+
+![alt](https://earthly.dev/blog/assets/images/cmake-vs-make-diff/5Gv149z.png)
+
+Để sử dụng Make, bạn phải tạo Makefile theo cách thủ công, nhưng với CMake, Makefile sẽ được tạo tự động. 
+
+#### Installing CMake và Make
+```
+cmake --version
+```
+Output :
+
+```
+cmake version 3.24.2
+
+CMake suite maintained and supported by Kitware (kitware.com/cmake).
+```
+
+Tiếp theo kiểm tra make:
+
+```
+make --version
+```
+
+Output:
+
+```
+GNU Make 4.1
+Built for x86_64-pc-linux-gnu
+Copyright (C) 1988-2014 Free Software Foundation, Inc.
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+```
+
+Kiểm tra MSBuild (đối với window) :
+
+```
+msbuild -version
+```
+
+Output
+```
+Microsoft (R) Build Engine version 15.8.168+ga8fba1ebd7 for .NET Framework
+Copyright (C) Microsoft Corporation. All rights reserved.
+
+15.8.168.64424
+```
+
+**Lưu ý:** Để sử dụng CMake trên Windows, bạn cần cài đặt MSBuild, một công cụ xây dựng.
+
+#### Mối quan hệ giữa MAKE và CMAKE:
+
+Để build project thì hãy chắc chắn rằng CMake đã được cài đặt trên máy. Nếu hệ điều hành của bạn là một flavor của Linux thì hãy cài dặt nó thông qua package manager.
+
+Ubuntu:
+```
+FRAMGIA\luong.the.vinh@framgia0221-pc:~$ sudo apt-get install cmake
+FRAMGIA\luong.the.vinh@framgia0221-pc:~$ cmake -version
+cmake version 3.5.1
+
+```
+
+**Ví dụ 1: Hello World**
+
+Code cho project này có thể tìm thấy ở thư mục. Trong ví dụ này thì một chương trình Hello World đơn giản sẽ được build (HelloWorld.cpp):
+```
+#include<iostream>
+
+int main(int argc, char *argv[]){
+   std::cout << "Hello World!" << std::endl;
+   return 0;
+}
+```
+Ngoài file **HelloWorld.cpp** ra thì chúng ta sẽ cần đến một file khác ở cùng thư mục là CMakeLists.txt có nội dung như sau:
+
+```
+cmake_minimum_required(VERSION 2.8.9)
+project (hello)
+add_executable(hello helloworld.cpp)
+
+```
+File này chỉ có 3 dòng và có ý nghĩa như sau:
+
+- Dòng đầu tiên sẽ định nghĩa phiên bản thấp nhất của CMake dành cho project này.
+
+- Dòng thứ hai sử dụng lệnh project() để đặt tên cho project.
+
+- Dòng thứ ba là lệnh add_executable(). Lệnh này nhằm mục đích tạo thêm một executable. Đối số đầu truyền vào là tên của executable sẽ được tạo, đối số thứ hai là source file sẽ được dùng để build executable.
+
+
+Bây giờ thì chúng ta đã sẵn sàng để build project HelloWorld sử dụng CMake. Chúng ta sẽ thực thi lệnh cmake kèm đường dẫn chứa source code và file CmakeLists.txt. Trong trường hợp này thì "." sẽ dùng để trỏ đến thư mục hiện tại:
+
+```
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/helloworld$ cmake .
+-- The C compiler identification is GNU 5.4.0
+-- The CXX compiler identification is GNU 5.4.0
+-- Check for working C compiler: /usr/bin/cc
+-- Check for working C compiler: /usr/bin/cc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Check for working CXX compiler: /usr/bin/c++
+-- Check for working CXX compiler: /usr/bin/c++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/luong.the.vinh/Workspaces/Examples/exploringBB/extras/cmake/helloworld
+
+```
+
+CMake sẽ xác định cấu hình môi trường được cài đặt trên máy và tạo một file Makefile cho project này. Chúng ta có thể xem và edit Makefile được tạo này, tuy nhiên thì những sự thay đổi chúng ta tạo ra sẽ bị ghi đè lại mỗi lần chúng ta chạy lại lệnh cmake.
+
+Một khi Makefile đã được tạo thì chúng ta sẽ dùng lệnh make để build project:
+
+```
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/helloworld$ make
+Scanning dependencies of target hello
+[ 50%] Building CXX object CMakeFiles/hello.dir/helloworld.cpp.o
+[100%] Linking CXX executable hello
+[100%] Built target hello
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/helloworld$ ls -l hello
+-rwxr-xr-x 1 FRAMGIA\luong.the.vinh FRAMGIA\domain^users 9224 Th08 20 09:58 hello
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/helloworld$ ./hello
+Hello World!
+```
+
+Project chúng ta build đã chạy! Như các bạn thấy thì quá trình build chương trình HelloWorld.cpp này thực sự có hơi rườm rà nhưng lại rất quan trọng đối với những người mới học bởi nó giải thích các hoạt động cơ bản của CMake. Bây giờ thì chúng ta đã sẵn sàng xem xét đến một số ví dụ CMake phức tạp hơn.
+
+**Ví dụ 2: Một project với nhiều directory**
+
+Khi project của chúng ta bắt đầu phình to thì chúng ta sẽ muốn quản lý chúng dưới dạng nhiều sub-directory. Việc sử dụng Makeflies trở nên khá dài dòng khi có sự hiện diện của sub-directories do trong thực tế thì việc tạo một Makefile trong mỗi sub-directory là việc rất phổ biến. Các Makefile này sau đó sẽ được gọi bởi Makefile trong thư mục cha.
+
+Cmake sẽ tỏ ra rất hữu dụng trong trường hợp này. Trong ví dụ này thì một project với cấu trúc thư mục điển hình sẽ được sử dụng. Chúng ta sẽ điều hướng terminal đến thư mục /exploringBB/extras/cmake/student có cấu trúc thư mục như sau:
+```
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/student$ tree
+.
+├── build
+├── CMakeLists.txt
+├── include
+│   └── Student.h
+└── src
+    ├── mainapp.cpp
+    └── Student.cpp
+
+3 directories, 4 files
+
+```
+
+Dạo đầu với CMake thông qua ví dụ
+Trong bài viết này mình sẽ trình bày các ví dụ đơn giản và mang tính ứng dụng cao trong việc áp dụng CMake để xây dựng một project C++. Các ví dụ mình đều thực hiện trên Ubuntu.
+
+Tiện ích make và Makefiles cung cấp một hệ thống build mà chúng ta có thể sử dụng để quản lý việc compile và re-compilation của một chương trình được viết bằng ngôn ngữ bất kỳ. Việc sử dụng Makefiles đôi khi lại có thể trở thành một công việc phức tạp trong trường hợp project mà chúng ta build có nhiều sub directories hoặc sẽ phải triển khai trên nhiều nền tảng khác nhau.
+
+Để khắc phục điều đó thì CMake ra đời. CMake là một công cụ sinh Makefile đa nền tảng. Nói đơn giản thì CMake sẽ tự động tạo ra Makefiles cho project của chúng ta. Ngoài ra thì nó cũng làm được nhiều hơn nhưng trong khuôn khổ bài viết thì mình sẽ chỉ tập trung vào việc tự động sinh Makefiles cho các project C/C++.
+
+Ví dụ 1: Hello World
+Code cho project này có thể tìm thấy ở thư mục. Trong ví dụ này thì một chương trình Hello World đơn giản sẽ được build (HelloWorld.cpp):
+
+#include<iostream>
+
+int main(int argc, char *argv[]){
+   std::cout << "Hello World!" << std::endl;
+   return 0;
+}
+
+Ngoài file HelloWorld.cpp ra thì chúng ta sẽ cần đến một file khác ở cùng thư mục là CMakeLists.txt có nội dung như sau:
+
+cmake_minimum_required(VERSION 2.8.9)
+project (hello)
+add_executable(hello helloworld.cpp)
+
+File này chỉ có 3 dòng và có ý nghĩa như sau:
+
+Dòng đầu tiên sẽ định nghĩa phiên bản thấp nhất của CMake dành cho project này.
+
+Dòng thứ hai sử dụng lệnh project() để đặt tên cho project.
+
+Dòng thứ ba là lệnh add_executable(). Lệnh này nhằm mục đích tạo thêm một executable. Đối số đầu truyền vào là tên của executable sẽ được tạo, đối số thứ hai là source file sẽ được dùng để build executable.
+
+Để build project thì hãy chắc chắn rằng CMake đã được cài đặt trên máy. Nếu hệ điều hành của bạn là một flavor của Linux thì hãy cài dặt nó thông qua package manager, ví dụ như với Ubuntu:
+
+```
+FRAMGIA\luong.the.vinh@framgia0221-pc:~$ sudo apt-get install cmake
+FRAMGIA\luong.the.vinh@framgia0221-pc:~$ cmake -version
+cmake version 3.5.1
+
+Điều hướng terminal đến thư mục chứa code project và check xem có đủ 2 file ở trên không:
+
+FRAMGIA\luong.the.vinh@framgia0221-pc:~$ cd ~/Workspaces/Examples/exploringBB/extras/cmake/helloworld/
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/helloworld$ ls
+CMakeLists.txt  helloworld.cpp
+```
+
+
+Bây giờ thì chúng ta đã sẵn sàng để build project HelloWorld sử dụng CMake. Chúng ta sẽ thực thi lệnh cmake kèm đường dẫn chứa source code và file CmakeLists.txt. Trong trường hợp này thì "." sẽ dùng để trỏ đến thư mục hiện tại:
+
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/helloworld$ cmake .
+-- The C compiler identification is GNU 5.4.0
+-- The CXX compiler identification is GNU 5.4.0
+-- Check for working C compiler: /usr/bin/cc
+-- Check for working C compiler: /usr/bin/cc -- works
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Check for working CXX compiler: /usr/bin/c++
+-- Check for working CXX compiler: /usr/bin/c++ -- works
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done
+-- Generating done
+-- Build files have been written to: /home/luong.the.vinh/Workspaces/Examples/exploringBB/extras/cmake/helloworld
+
+CMake sẽ xác định cấu hình môi trường được cài đặt trên máy và tạo một file Makefile cho project này. Chúng ta có thể xem và edit Makefile được tạo này, tuy nhiên thì những sự thay đổi chúng ta tạo ra sẽ bị ghi đè lại mỗi lần chúng ta chạy lại lệnh cmake.
+
+Một khi Makefile đã được tạo thì chúng ta sẽ dùng lệnh make để build project:
+```
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/helloworld$ make
+Scanning dependencies of target hello
+[ 50%] Building CXX object CMakeFiles/hello.dir/helloworld.cpp.o
+[100%] Linking CXX executable hello
+[100%] Built target hello
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/helloworld$ ls -l hello
+-rwxr-xr-x 1 FRAMGIA\luong.the.vinh FRAMGIA\domain^users 9224 Th08 20 09:58 hello
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/helloworld$ ./hello
+Hello World!
+```
+
+
+
+Project chúng ta build đã chạy! Như các bạn thấy thì quá trình build chương trình HelloWorld.cpp này thực sự có hơi rườm rà nhưng lại rất quan trọng đối với những người mới học bởi nó giải thích các hoạt động cơ bản của CMake. Bây giờ thì chúng ta đã sẵn sàng xem xét đến một số ví dụ CMake phức tạp hơn.
+
+Ví dụ 2: Một project với nhiều directory
+Khi project của chúng ta bắt đầu phình to thì chúng ta sẽ muốn quản lý chúng dưới dạng nhiều sub-directory. Việc sử dụng Makeflies trở nên khá dài dòng khi có sự hiện diện của sub-directories do trong thực tế thì việc tạo một Makefile trong mỗi sub-directory là việc rất phổ biến. Các Makefile này sau đó sẽ được gọi bởi Makefile trong thư mục cha.
+
+Cmake sẽ tỏ ra rất hữu dụng trong trường hợp này. Trong ví dụ này thì một project với cấu trúc thư mục điển hình sẽ được sử dụng. Chúng ta sẽ điều hướng terminal đến thư mục /exploringBB/extras/cmake/student có cấu trúc thư mục như sau:
+```
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/student$ tree
+.
+├── build
+├── CMakeLists.txt
+├── include
+│   └── Student.h
+└── src
+    ├── mainapp.cpp
+    └── Student.cpp
+
+3 directories, 4 files
+
+```
+
+Các bạn có thể thấy là tất cả các file header (.h) được đặt trong thư mục include và tất cả các file mã nguồn (.cpp) được đặt trong thư mục src. Ngoài ra thì có cả thư mục build (hiện đang rỗng) được sử dụng để chứa các file binary executable và các file tạm cần thiết cho quá trình build. File CmakeLists.txt cho project này sẽ có một chút khác biệt so với file được sử dụng trong ví dụ 1:
+```
+cmake_minimum_required(VERSION 2.8.9)
+project(directory_test)
+
+include_directories(include)
+
+#set(SOURCES src/mainapp.cpp src/Student.cpp)
+
+file(GLOB SOURCES "src/*.cpp")
+
+add_executable(testStudent ${SOURCES})
+
+```
+
+Các thay đổi quan trọng trong file CMake này là như sau:
+
+Hàm include_directories() được sử dụng để tích hợp các file header vào trong môi trường build.
+
+Hàm set(SOURCE...) có thể được sử dụng để đặt một biến (SOURCE) chứa tất cả tên của các file source (.cpp) trong project. Tuy nhiên thì bởi mỗi một file source cần được thêm một cách thủ công nên dòng tiếp theo sẽ được dùng thay thế lệnh này và hàm set sẽ bị comment lại.
+Hàm file() được sử dụng để thêm source file vào project. GLOB (hoặc GLOB_RECURSE) sẽ được sử dụng để tạo một danh sách các file thỏa mãn expression được khai báo (ví dụ: src/*.cpp) và thêm chúng vào biến SOURCE.
+
+Hàm add_executable() sử dụng biến SOURCE thay vì việc sử dụng tham chiếu cụ thể của từng source file để build một chương trình executable là testStudent.
+
+Trong ví dụ này thì tất cả các file build sẽ được đặt ở trong thư mục build. Chúng ta có thể làm việc này một cách dễ dàng bằng cách gọi cmake từ thư mục build như sau:
+
+```
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/student$ cd build
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/student/build$ cmake ..
+-- The C compiler identification is GNU 5.4.0
+-- The CXX compiler identification is GNU 5.4.0
+...
+```
+Thư mục build lúc này sẽ bao gồm Makefile cho project, Makefile sẽ tham chiếu chính xác đến các file trong thư mục src và include. Project lúc này sẽ có thể được build từ thư mục build sử dụng lệnh make
+
+```
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/student/build$ ls
+CMakeCache.txt  CMakeFiles  cmake_install.cmake  Makefile
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/student/build$ make
+...
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/student/build$ ls
+CMakeCache.txt  CMakeFiles  cmake_install.cmake  Makefile  testStudent
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/student/build$ ./testStudent
+A student with name Joe
+```
+
+Một ưu điểm dễ thấy của cách tiếp cận này là tất cả các file liên quan đến quá trình build đều nằm trong thư mục build. Để clean project thì chúng ta đơn giản là chỉ cần xóa đệ quy tất cả files/directories nằm trong thư mục build, ví dụ:
+
+```
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/student/build$ cd ..
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/student$ rm -r build/*
+FRAMGIA\luong.the.vinh@framgia0221-pc:~/Workspaces/Examples/exploringBB/extras/cmake/student$ tree
+.
+├── build
+├── CMakeLists.txt
+├── include
+│   └── Student.h
+└── src
+    ├── mainapp.cpp
+    └── Student.cpp
+
+3 directories, 4 files
+```
+
+Như các bạn thấy thì cấu trúc cây thư mục của project là tương tự như trước khi cmake được thực thi.
+
+**Lưu ý**: Mỗi lần thêm source file mới vào project thì chúng ta sẽ phải chạy lại cmake. Do chúng ta cần phải cập nhật lại Makefiles cho những thay đổi mới.
+
+Tài liệu tham khảo 
+
+[Dạo đầu với CMake thông qua ví dụ](https://viblo.asia/p/dao-dau-voi-cmake-thong-qua-vi-du-07LKXNbelV4)
+
+[Quản lý các shared libary trong linux](https://manthang.wordpress.com/2010/12/04/quan-ly-cac-shared-library-trong-linux/)
+
+
+
+### Strip symbols 
+
+<a id="opt2"></a>
+
+Cách đây vài năm, tôi đã hỏi một câu hỏi về cách giảm kích thước của tệp thực thi. Sử dụng trình biên dịch MinGW, việc strip symbols (tùy chọn -s) đã giúp giảm hơn 50% kích thước
+
+Nó có thể ám chỉ đến một số hoạt động như loại bỏ dấu câu (chấm, dấu phẩy, dấu chấm phẩy), ký hiệu đặc biệt (dấu ngoặc, dấu gạch ngang, dấu chấm than), hoặc các biểu tượng không cần thiết khác trong văn bản.
