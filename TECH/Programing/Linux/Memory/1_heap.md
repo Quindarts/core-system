@@ -37,12 +37,13 @@
 ## Data structure<a id="thetieude3"></a>
 
  **Max-Heap** : 
- Trong Max-Heap, khóa có tại nút gốc phải lớn nhất trong số các khóa có ở tất cả các nút con của nó. 
+ Trong Max-Heap, các node phải có giá trị lớn nhất khi so sánh với 2 node con bên trái hoặc bên phải.
  Thuộc tính tương tự phải đúng đệ quy cho tất cả các cây con trong Cây nhị phân đó.
 
- **Min-Heap**: Trong Min-Heap, khóa có tại nút gốc phải ở mức tối thiểu trong số các khóa có ở tất cả các khóa con của nó.
-  Thuộc tính tương tự phải đúng đệ quy cho tất cả các cây con trong Cây nhị phân đó.
+ **Min-Heap**: 
 
+  Trong Min-Heap, các node phải có giá trị nhỏs nhất khi so sánh với 2 node con bên trái hoặc bên phải.
+  Thuộc tính tương tự phải đúng đệ quy cho tất cả các cây con trong Cây nhị phân đó.
 
 ## Source example <a id="thetieude4"></a>
 

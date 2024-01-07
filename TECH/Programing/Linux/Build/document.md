@@ -991,12 +991,12 @@ Tài liệu tham khảo
 
 [Quản lý các shared libary trong linux](https://manthang.wordpress.com/2010/12/04/quan-ly-cac-shared-library-trong-linux/)
 
-
-
-### Strip symbols 
+[Hướng dẫn Make File cơ bản](https://www.cs.colby.edu/maxwell/courses/tutorials/maketutor/)
 
 <a id="opt2"></a>
 
-Cách đây vài năm, tôi đã hỏi một câu hỏi về cách giảm kích thước của tệp thực thi. Sử dụng trình biên dịch MinGW, việc strip symbols (tùy chọn -s) đã giúp giảm hơn 50% kích thước
+#### Hiểu ELF ?
+ Nêu vấn đề: Khi source code lớn, có thể chia code thành các lớp/tệp con nhỏ hơn hoặc các đơn vị tổ chức chung.
+ Trong C/C++, thuật ngữ này được gọi là thư viện dùng chung và định dạng tệp Elf cung cấp chức năng này thông qua Relocation, Symbols and Dynamic Linking. Điều đó có nghĩa là những "thứ" được relocated là symbol và symbols phần lớn là các variables và function có các dạng khác nhau.
 
-Nó có thể ám chỉ đến một số hoạt động như loại bỏ dấu câu (chấm, dấu phẩy, dấu chấm phẩy), ký hiệu đặc biệt (dấu ngoặc, dấu gạch ngang, dấu chấm than), hoặc các biểu tượng không cần thiết khác trong văn bản.
+**Khái niệm**  : ELF (Executable and Linkable Format) là một tệp tin được sử dụng để lưu trữ source code của các chương trình thực thi và thư viện trong các hệ điều hành Unix và Unix-like. Nó cung cấp cấu trúc để tổ chức và lưu trữ các thành phần quan trọng của một ứng dụng hoặc thư viện như source code, Dynamic Linking, phân đoạn, bảng ký hiệu, và các thông tin khác.
